@@ -29,13 +29,28 @@ define(["Filer", "util"], function(Filer, util) {
       });
     });
 
-    it('should create a symlink', function(done) {
+    it('should create a symlink if source path exists', function(done) {
       var fs = util.fs();
 
       fs.symlink('/', '/myfile', function(error) {
         expect(error).not.to.exist;
 
-        fs.stat('/myfile', function(err, stats) {
+        fs.stat('/myfile', function(error, stats) {
+          expect(error).not.to.exist;
+          expect(stats.type).to.equal('DIRECTORY');
+          done();
+        });
+      });
+    });
+    
+    it('should create a symlink if source path does not exist', function(done) {
+      var fs = util.fs();
+
+      fs.symlink('/file', '/myfile', function(error) {
+        expect(error).not.to.exist;
+
+        fs.stat('/myfile', function(error, stats) {
+          console.log('Error symlink: ' + error);
           expect(error).not.to.exist;
           expect(stats.type).to.equal('DIRECTORY');
           done();

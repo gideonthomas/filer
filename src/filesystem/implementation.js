@@ -160,6 +160,7 @@ define(function(require) {
         callback(error);
       } else {
         if(!_(parentDirectoryData).has(name)) {
+          console.log('does not have name');
           callback(new Errors.ENOENT());
         } else {
           var nodeId = parentDirectoryData[name].id;
