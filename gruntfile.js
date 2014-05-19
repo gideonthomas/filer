@@ -35,7 +35,8 @@ module.exports = function(grunt) {
         'src/super-node.js',
         'src/node.js',
         'src/stats.js',
-        'src/filesystem/**/*.js'
+        'src/filesystem/**/*.js',
+        'src/network.js'
       ]
     },
 
