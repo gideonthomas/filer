@@ -1,5 +1,5 @@
 define(['node_require'], function(node_require) {
-  if (typeof XMLHttpRequest === undefined) {
+  if (typeof XMLHttpRequest === "undefined") {
     var request = node_require('request');
   }
 
@@ -26,7 +26,7 @@ define(['node_require'], function(node_require) {
       method: "GET",
       encoding: null
     }, function(err, msg, body) {
-      var data,
+      var data = null,
           arrayBuffer,
           statusCode,
           arrayLength = body && body.length;
@@ -58,10 +58,10 @@ define(['node_require'], function(node_require) {
         throw('Callback required');
       }
 
-      if (typeof XMLHttpRequest !== undefined) {
-        browserDownload(uri, callback);
-      } else {
+      if (typeof XMLHttpRequest === "undefined") {
         nodeDownload(uri, callback);
+      } else {
+        browserDownload(uri, callback);
       }
     }
   };

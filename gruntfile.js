@@ -95,6 +95,14 @@ module.exports = function(grunt) {
           }
         }
       }
+    },
+    connect: {
+      server: {
+        options: {
+          port: 8080,
+          base: '.'
+        }
+      }
     }
   });
 
@@ -103,12 +111,13 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-requirejs');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-shell');
+  grunt.loadNpmTasks('grunt-contrib-connect');
 
   grunt.registerTask('develop', ['clean', 'requirejs:develop']);
   grunt.registerTask('filer-test', ['clean', 'requirejs:test']);
   grunt.registerTask('release', ['develop', 'uglify']);
   grunt.registerTask('check', ['jshint']);
-  grunt.registerTask('test', ['check', 'filer-test', 'shell:mocha']);
+  grunt.registerTask('test', ['check', 'filer-test', 'connect:server', 'shell:mocha']);
 
   grunt.registerTask('default', ['test']);
 };
