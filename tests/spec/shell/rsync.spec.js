@@ -487,6 +487,47 @@ define(["Filer", "util"], function(Filer, util) {
         });
       });
     });
+    
+    it('##should succeed syncing a directory if the destination directories doesn\'t exist', function(done) {
+      var fs = util.fs();
+      var shell = fs.Shell();
+
+      fs.mkdir('/test', function(err) {
+        expect(err).to.not.exist;
+        fs.mkdir('/test/dir1', function(err) { 
+          expect(err).to.not.exist;
+          fs.mkdir('/test/dir2', function(err) { 
+            expect(err).to.not.exist;
+            fs.mkdir('/test/dir1/dir12', function(err) { 
+              expect(err).to.not.exist;
+              fs.mkdir('/test2', function(err) {
+                expect(err).to.not.exist;
+                shell.rsync('/test', '/test2', { size: 5 }, function(err) {
+                  console.dir(err);
+                  expect(err).to.not.exist;
+                  fs.stat('/test2', function(err, stats) {
+                    expect(err).to.not.exist;
+                    expect(stats).to.exist;
+                    expect(stats.type).to.equal('DIRECTORY');
+                    expect(stats.data).to.exist;
+                    expect(Object.prototype.hasOwnProperty.call(stats.data, 'dir1')).to.equal(true);
+                    expect(Object.prototype.hasOwnProperty.call(stats.data, 'dir2')).to.equal(true);
+                    fs.stat('/test2/dir1', function(err, stats) {
+                      expect(err).to.not.exist;
+                      expect(stats).to.exist;
+                      expect(stats.type).to.equal('DIRECTORY');
+                      expect(stats.data).to.exist;
+                      expect(Object.prototype.hasOwnProperty.call(stats.data, 'dir12')).to.equal(true);
+                      done();
+                    });
+                  });
+                });
+              });
+            });
+          }); 
+        });   
+      });
+    });
 
   });
 });
