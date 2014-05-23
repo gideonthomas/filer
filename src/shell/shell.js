@@ -7,6 +7,9 @@ define(function(require) {
   var async = require('async');
   var rsync = require('src/rsync');
 
+  require('zip');
+  require('unzip');
+
   function Shell(fs, options) {
     options = options || {};
 
@@ -155,7 +158,7 @@ define(function(require) {
     callback = callback || function(){};
 
     if(!files) {
-      callback(new Error("Missing files argument"));
+      callback(new Errors.EINVAL("Missing files argument"));
       return;
     }
 
@@ -209,7 +212,7 @@ define(function(require) {
     callback = callback || function(){};
 
     if(!dir) {
-      callback(new Error("Missing dir argument"));
+      callback(new Errors.EINVAL("Missing dir argument"));
       return;
     }
 
@@ -281,7 +284,7 @@ define(function(require) {
     callback = callback || function(){};
 
     if(!path) {
-      callback(new Error("Missing path argument"));
+      callback(new Errors.EINVAL("Missing path argument"));
       return;
     }
 
@@ -366,19 +369,32 @@ define(function(require) {
     callback = callback || function(){};
 
     if(!path) {
-      callback(new Errors.EINVAL('missing path argument'));
+      callback(new Errors.EINVAL("Missing path argument"));
       return;
     }
-    else if (path === '/'){
+    else if (path === '/') {
       callback();
       return;
     }
-    function _mkdirp(path, callback){
+    function _mkdirp(path, callback) {
       fs.stat(path, function (err, stat) {
-        //doesn't exist
-        if (err && err.code === 'ENOENT') {
+        if(stat) {
+          if(stat.isDirectory()) {
+            callback();
+            return;
+          }
+          else if (stat.isFile()) {
+            callback(new Errors.ENOTDIR());
+            return;
+          }
+        }
+        else if (err && err.code !== 'ENOENT') {
+          callback(err);
+          return;
+        }
+        else {
           var parent = Path.dirname(path);
-          if(parent === '/'){ //parent is root
+          if(parent === '/') {
             fs.mkdir(path, function (err) {
               if (err && err.code != 'EEXIST') {
                 callback(err);
@@ -388,10 +404,10 @@ define(function(require) {
               return;
             });
           }
-          else { //parent is not root, make parent first
+          else {
             _mkdirp(parent, function (err) {
               if (err) return callback(err);
-              fs.mkdir(path, function (err) { //then make dir
+              fs.mkdir(path, function (err) {
                 if (err && err.code != 'EEXIST') {
                   callback(err);
                   return;
@@ -402,25 +418,199 @@ define(function(require) {
             });
           }
         }
-        //other error
-        else if (err){
-          callback(err);
-          return;
-        }
-        //already exists
-        else if (stat.type === 'DIRECTORY') {
-          callback();
-          return;
-        }
-        //not a directory
-        else if (stat.type === 'FILE') {
-          callback(new Errors.ENOTDIR());
-          return;
-        }
+
       });
     }
 
     _mkdirp(path, callback);
+  };
+
+  /**
+   * Downloads the file at `url` and saves it to the filesystem.
+   * The file is saved to a file named with the current date/time
+   * unless the `options.filename` is present, in which case that
+   * filename is used instead. The callback receives (error, path).
+   */
+  Shell.prototype.wget = function(url, options, callback) {
+    var fs = this.fs;
+    if(typeof options === 'function') {
+      callback = options;
+      options = {};
+    }
+    options = options || {};
+    callback = callback || function(){};
+
+    if(!url) {
+      callback(new Errors.EINVAL('missing url argument'));
+      return;
+    }
+
+    // Grab whatever is after the last / (assuming there is one) and
+    // remove any non-filename type chars(i.e., : and /). Like the real
+    // wget, we leave query string or hash portions in tact.
+    var path = options.filename || url.replace(/[:/]/g, '').split('/').pop();
+    path = Path.resolve(fs.cwd, path);
+
+    function onerror() {
+     callback(new Error('unable to get resource'));
+    }
+
+    var request = new XMLHttpRequest();
+    request.onload = function() {
+      if(request.status !== 200) {
+        return onerror();
+      }
+
+      var data = new Uint8Array(request.response);
+      fs.writeFile(path, data, function(err) {
+        if(err) {
+          callback(err);
+        } else {
+          callback(null, path);
+        }
+      });
+    };
+    request.onerror = onerror;
+    request.open("GET", url, true);
+    if("withCredentials" in request) {
+      request.withCredentials = true;
+    }
+
+    request.responseType = "arraybuffer";
+    request.send();
+  };
+
+  Shell.prototype.unzip = function(zipfile, options, callback) {
+    var fs = this.fs;
+    var sh = this;
+    if(typeof options === 'function') {
+      callback = options;
+      options = {};
+    }
+    options = options || {};
+    callback = callback || function(){};
+
+    if(!zipfile) {
+      callback(new Errors.EINVAL('missing zipfile argument'));
+      return;
+    }
+
+    var path = Path.resolve(this.cwd, zipfile);
+    var destination = Path.resolve(options.destination || this.cwd);
+
+    fs.readFile(path, function(err, data) {
+      if(err) return callback(err);
+
+      var unzip = new Zlib.Unzip(data);
+
+      // Separate filenames within the zip archive with what will go in fs.
+      // Also mark any directories (i.e., paths with a trailing '/')
+      var filenames = unzip.getFilenames().map(function(filename) {
+        return {
+          zipFilename: filename,
+          fsFilename: Path.join(destination, filename),
+          isDirectory: /\/$/.test(filename)
+        };
+      });
+
+      function decompress(path, callback) {
+        var data = unzip.decompress(path.zipFilename);
+        if(path.isDirectory) {
+          sh.mkdirp(path.fsFilename, callback);
+        } else {
+          fs.writeFile(path.fsFilename, data, callback);
+        }
+      }
+
+      async.eachSeries(filenames, decompress, callback);
+    });
+  };
+
+  Shell.prototype.zip = function(zipfile, paths, options, callback) {
+    var fs = this.fs;
+    var sh = this;
+    if(typeof options === 'function') {
+      callback = options;
+      options = {};
+    }
+    options = options || {};
+    callback = callback || function(){};
+
+    if(!zipfile) {
+      callback(new Errors.EINVAL('missing zipfile argument'));
+      return;
+    }
+    if(!paths) {
+      callback(new Errors.EINVAL('missing paths argument'));
+      return;
+    }
+    if(typeof paths === 'string') {
+      paths = [ paths ];
+    }
+    zipfile = Path.resolve(this.cwd, zipfile);
+
+    function encode(s) {
+      return new TextEncoder('utf8').encode(s);
+    }
+
+    function addFile(path, callback) {
+      fs.readFile(path, function(err, data) {
+        if(err) return callback(err);
+
+        // Make path relative within the zip
+        var relpath = path.replace(/^\//, '');
+        zip.addFile(data, { filename: encode(relpath) });
+        callback();
+      });
+    }
+
+    function addDir(path, callback) {
+      fs.readdir(path, function(err, list) {
+        // Add the directory itself (with no data) and a trailing /
+        zip.addFile([], {
+          filename: encode(path + '/'),
+          compressionMethod: Zlib.Zip.CompressionMethod.STORE
+        });
+
+        if(!options.recursive) {
+          callback();
+        }
+
+        // Add all children of this dir, too
+        async.eachSeries(list, function(entry, callback) {
+          add(Path.join(path, entry), callback);
+        }, callback);
+      });
+    }
+
+    function add(path, callback) {
+      path = Path.resolve(sh.cwd, path);
+      fs.stat(path, function(err, stats) {
+        if(err) return callback(err);
+
+        if(stats.isDirectory()) {
+          addDir(path, callback);
+        } else {
+          addFile(path, callback);
+        }
+      });
+    }
+
+    var zip = new Zlib.Zip();
+
+    // Make sure the zipfile doesn't already exist.
+    fs.stat(zipfile, function(err, stats) {
+      if(stats) {
+        return callback(new Errors.EEXIST('zipfile already exists'));
+      }
+
+      async.eachSeries(paths, add, function(err) {
+        if(err) return callback(err);
+
+        var compressed = zip.compress();
+        fs.writeFile(zipfile, compressed, callback);
+      });
+    });
   };
 
   Shell.prototype.rsync = rsync;

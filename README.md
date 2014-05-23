@@ -277,6 +277,7 @@ var fs = new Filer.FileSystem();
 * [fs.readlink(path, callback)](#readlink)
 * [fs.realpath(path, [cache], callback)](#realpath)
 * [fs.unlink(path, callback)](#unlink)
+* [fs.mknod(path, mode, callback)](#mknod)
 * [fs.rmdir(path, callback)](#rmdir)
 * [fs.mkdir(path, [mode], callback)](#mkdir)
 * [fs.readdir(path, callback)](#readdir)
@@ -556,7 +557,7 @@ fs.symlink('/logs/august.log', '/logs/current', function(error) {
 
 #### fs.realpath(path, [cache], callback)<a name="realpath"></a>
 
-NOTE: Not yet implemented, see https://github.com/js-platform/filer/issues/85
+NOTE: Not implemented, see https://github.com/js-platform/filer/issues/85
 
 #### fs.unlink(path, callback)<a name="unlink"></a>
 
@@ -571,6 +572,26 @@ Example:
 fs.unlink('/backup.old', function(err) {
   if(err) throw err;
   // /backup.old is now removed
+});
+```
+
+#### fs.mknod(path, mode, callback)<a name="mknod"></a>
+
+Creates a node at `path` based on the mode passed which is either `FILE` or `DIRECTORY`. Asynchronous [mknod(2)](http://pubs.opengroup.org/onlinepubs/009695399/functions/mknod.html). Callback gets no additional arguments.
+
+Example:
+
+```javascript
+// Create a /dir directory
+fs.mknod('/dir', 'DIRECTORY', function(err) {
+  if(err) throw err;
+  // /dir is now created
+  
+  // Create a file inside /dir
+  fs.mknod('/dir/myfile', 'FILE', function(err) {
+    if(err) throw err;
+    // /dir/myfile now exists
+  });
 });
 ```
 
@@ -724,7 +745,7 @@ NOTE: Not yet implemented, see https://github.com/js-platform/filer/issues/87
 
 #### fs.write(fd, buffer, offset, length, position, callback)<a name="write"></a>
 
-Writes bytes from `buffer` to the file specified by `fd`. Asynchronous [write(2), pwrite(2)](http://pubs.opengroup.org/onlinepubs/009695399/functions/write.html). The `offset` and `length` arguments describe the part of the buffer to be written. The `position` refers to the offset from the beginning of the file where this data should be written. If `position` is `null`, the data will be written at the current position. The callback gets `(error, nbytes)`, where `nbytes` is the number of bytes written.
+Writes bytes from ArrayBufferView `buffer` to the file specified by `fd`. Asynchronous [write(2), pwrite(2)](http://pubs.opengroup.org/onlinepubs/009695399/functions/write.html). The `offset` and `length` arguments describe the part of the buffer to be written. The `position` refers to the offset from the beginning of the file where this data should be written. If `position` is `null`, the data will be written at the current position. The callback gets `(error, nbytes)`, where `nbytes` is the number of bytes written.
 
 NOTE: Filer currently writes the entire buffer in a single operation. However, future versions may do it in chunks.
 
@@ -761,7 +782,7 @@ fs.open('/myfile', 'w', function(err, fd) {
 
 #### fs.read(fd, buffer, offset, length, position, callback)<a name="read"></a>
 
-Read bytes from the file specified by `fd` into `buffer`. Asynchronous [read(2), pread(2)](http://pubs.opengroup.org/onlinepubs/009695399/functions/read.html). The `offset` and `length` arguments describe the part of the buffer to be used. The `position` refers to the offset from the beginning of the file where this data should be read. If `position` is `null`, the data will be written at the current position. The callback gets `(error, nbytes)`, where `nbytes` is the number of bytes read.
+Read bytes from the file specified by `fd` into ArrayBufferView `buffer`. Asynchronous [read(2), pread(2)](http://pubs.opengroup.org/onlinepubs/009695399/functions/read.html). The `offset` and `length` arguments describe the part of the buffer to be used. The `position` refers to the offset from the beginning of the file where this data should be read. If `position` is `null`, the data will be written at the current position. The callback gets `(error, nbytes)`, where `nbytes` is the number of bytes read.
 
 NOTE: Filer currently reads into the buffer in a single operation. However, future versions may do it in chunks.
 
@@ -824,7 +845,7 @@ fs.readFile('/myfile.txt', function (err, data) {
 
 #### fs.writeFile(filename, data, [options], callback)<a name="writeFile"></a>
 
-Writes data to a file. `data` can be a string or a buffer, in which case any encoding option is ignored. The `options` argument is optional, and can take the form `"utf8"` (i.e., an encoding) or be an object literal: `{ encoding: "utf8", flag: "w" }`. If no encoding is specified, and `data` is a string, the encoding defaults to `'utf8'`.  The callback gets `(error)`.
+Writes data to a file. `data` can be a string or an ArrayBufferView, in which case any encoding option is ignored. The `options` argument is optional, and can take the form `"utf8"` (i.e., an encoding) or be an object literal: `{ encoding: "utf8", flag: "w" }`. If no encoding is specified, and `data` is a string, the encoding defaults to `'utf8'`.  The callback gets `(error)`.
 
 Examples:
 
@@ -843,7 +864,7 @@ fs.writeFile('/myfile', buffer, function (err) {
 
 #### fs.appendFile(filename, data, [options], callback)<a name="appendFile"></a>
 
-Writes data to the end of a file. `data` can be a string or a buffer, in which case any encoding option is ignored. The `options` argument is optional, and can take the form `"utf8"` (i.e., an encoding) or be an object literal: `{ encoding: "utf8", flag: "w" }`. If no encoding is specified, and `data` is a string, the encoding defaults to `'utf8'`.  The callback gets `(error)`.
+Writes data to the end of a file. `data` can be a string or an ArrayBufferView, in which case any encoding option is ignored. The `options` argument is optional, and can take the form `"utf8"` (i.e., an encoding) or be an object literal: `{ encoding: "utf8", flag: "w" }`. If no encoding is specified, and `data` is a string, the encoding defaults to `'utf8'`.  The callback gets `(error)`.
 
 Examples:
 
@@ -1134,6 +1155,9 @@ var sh = fs.Shell();
 * [sh.tempDir(callback)](#tempDir)
 * [sh.mkdirp(path, callback)](#mkdirp)
 * [sh.rsync(srcPath, destPath, [options], callback)](#rsync)
+* [sh.wget(path, [options], callback)](#wget)
+* [sh.zip(zipfile, paths, [options], callback)](#zip)
+* [sh.unzip(zipfile, [options], callback)](#unzip)
 
 #### sh.cd(path, callback)<a name="cd"></a>
 
@@ -1354,6 +1378,16 @@ time: true //default 'false'. Preserves file modified time when syncing.
 links: true //default 'false'. Copies symlinks as links instead of resolving.
 fs: new Filer.FileSystem() //takes an optional FS reference to sync the changes to. If absent syncs to/from the same FS.
 
+#### sh.wget(url, [options], callback)<a name="wget"></a>
+
+Downloads the file at `url` and saves it to the filesystem.
+
+The file is saved to a file named with the filename portion of the url
+unless the `options.filename` is present, in which case that
+filename is used instead. The callback receives `(error, path)`,
+where `path` is the full path to the downloaded file.
+>>>>>>> 73392d3f35223717125179a0c391a2fcd6ebe91f
+
 Example:
 
 ```javascript
@@ -1368,3 +1402,74 @@ fs.writeFile('/1.txt','This is my file.', 'utf8', function(err) {
   });
 });
 ```
+
+// Download the file at /files/file.json
+sh.wget('/files/file.json', function(err, path) {
+  if(err) throw err;
+  // /file.json is now saved to the fs
+});
+
+// Download the file at /files/file.json, specifying a filename
+sh.wget('/data?id=17', {filename: 'file.json'}, function(err, path) {
+  if(err) throw err;
+  // /file.json is now saved to the fs
+});
+```
+
+#### sh.zip(zipfile, paths, [options], callback)]<a name="zip"></a>
+
+Creates a zip archive named `zipfile` using the paths (files, dirs) listed in `paths`.
+Valid options include `recursive=true`, which when set, causes directories to be followed
+deeply. The `paths` argument must either be a single path (String) or a list of paths
+(Array of String). The zip archive file, named in `zipfile`, must not exist or an error
+will be returned on the callback. The callback receives `(error)`.
+
+Examples:
+
+```javascript
+// Compress a single file
+sh.zip('/data.zip', '/data.txt', function(err) {
+  if(err) throw err;
+  // /data.zip is now the compressed archive of /data.txt
+});
+
+// Compress multiple files
+sh.zip('/data.zip', ['/data.txt', '/data2.txt'], function(err) {
+  if(err) throw err;
+  // /data.zip is now the compressed archive of /data.txt and /data2.txt
+});
+
+// Compress the entire filesystem, starting at the root /
+sh.zip('/fs-backup.zip', '/', { recursive: true }, function(err) {
+  if(err) throw err;
+  // /fs-backup.zip now contains the entire filesystem
+});
+```
+
+#### sh.unzip(zipfile, [options], callback)]<a name="zip"></a>
+
+Extracts files and directories from a zip archive named `zipfile`. If `zipfile` does not
+exist, an error is returned on the callback. Valid options include `destination`, which
+is the path to use when extracting the files (defaults to the shell's current working directory).
+If an optional `destination` path is specified, it must first exist. The callback receives `(error)`.
+
+Examples:
+
+```javascript
+// Extract files in /backup.zip to the current directory
+sh.unzip('/backup.zip', function(err) {
+  if(err) throw err;
+  // The current working directory now contains all files archived in backup.zip
+});
+
+// Extract files in /backup.zip to the /backup directory
+sh.mkdirp('/backup', function(err) {
+  if(err) throw err;
+
+  sh.unzip('/backup.zip', { destination: '/backup' }, function(err) {
+    if(err) throw err;
+    // The current working directory now contains all files archived in backup.zip
+  });
+});
+```
+>>>>>>> 73392d3f35223717125179a0c391a2fcd6ebe91f
