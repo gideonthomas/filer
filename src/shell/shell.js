@@ -613,12 +613,6 @@ define(function(require) {
     });
   };
 
-  rsync.sourceList = rsync.rsync.getSrcList;
-  rsync.createParentDirectories = Shell().mkdirp;
-  rsync.checksums = rsync.rsync.getChecksums;
-  rsync.diff = rsync.diff;
-  rsync.patch = rsync.sync;
-
   Shell.prototype.rsync = rsync;
 
   return Shell;

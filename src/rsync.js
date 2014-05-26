@@ -581,6 +581,11 @@ define(function(require) {
     return tmp;
   }
 
+  rsync.sourceList = rsync.getSrcList;
+  rsync.checksums = rsync.getChecksums;
+  rsync.diff = diff;
+  rsync.patch = sync;
+
   return rsync;
 
 });
