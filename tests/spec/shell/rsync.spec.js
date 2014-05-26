@@ -62,7 +62,7 @@ define(["Filer", "util"], function(Filer, util) {
           expect(err).to.not.exist;
           fs.writeFile('/test/1.txt','This iz mi fiel. It doez not have any topos,', 'utf8', function(err) {
             expect(err).to.not.exist;
-            shell.rsync('/1.txt', '/test', { size: 5 }, function(err) {
+            shell.rsync('/1.txt', '/test', {recursive: true, size: 5 }, function(err) {
               expect(err).to.not.exist;
               fs.readFile('/test/1.txt', 'utf8', function(err, data) {
                 expect(err).to.not.exist;
@@ -86,7 +86,7 @@ define(["Filer", "util"], function(Filer, util) {
           expect(err).to.not.exist;
           fs.writeFile('/test/1.txt','This is my file.','utf8',function(err) {
             expect(err).to.not.exist;
-            shell.rsync('/1.txt', '/test', { size: 5 }, function(err) {
+            shell.rsync('/1.txt', '/test', {recursive: true, size: 5 }, function(err) {
               expect(err).to.not.exist;
               fs.readFile('/test/1.txt', 'utf8', function(err, data){
                 expect(err).to.not.exist;
@@ -110,7 +110,7 @@ define(["Filer", "util"], function(Filer, util) {
           expect(err).to.not.exist;
           fs.writeFile('/test/1.txt','This is my file. It is longer than the source version.', 'utf8', function(err) {
             expect(err).to.not.exist;
-            shell.rsync('/1.txt', '/test', { size: 5 }, function(err) {
+            shell.rsync('/1.txt', '/test', {recursive: true, size: 5 }, function(err) {
               expect(err).to.not.exist;
               fs.readFile('/test/1.txt', 'utf8', function(err, data){
                 expect(err).to.not.exist;
@@ -132,7 +132,7 @@ define(["Filer", "util"], function(Filer, util) {
         expect(err).to.not.exist;
         fs.writeFile('/1.txt','This is my file. It does not exist in the destination folder.', 'utf8', function(err) { 
           expect(err).to.not.exist;
-          shell.rsync('/1.txt', '/test', { size: 5 }, function(err) {
+          shell.rsync('/1.txt', '/test', {recursive: true, size: 5 }, function(err) {
             expect(err).to.not.exist;
             fs.readFile('/test/1.txt', 'utf8', function(err, data){
               expect(err).to.not.exist;
@@ -181,7 +181,7 @@ define(["Filer", "util"], function(Filer, util) {
               fs.utimes('/test/1.txt', date, date, function(err) {
                 expect(err).to.not.exist;
                 shell.ls('/', {recursive: true}, function(err, stuff){
-                  shell.rsync('/1.txt', '/test', {size: 5, checksum: false }, function(err) {
+                  shell.rsync('/1.txt', '/test', {recursive: true, size: 5, checksum: false }, function(err) {
                     expect(err).to.not.exist;
                     fs.readFile('/test/1.txt', 'utf8', function(err, data) {
                       expect(err).to.not.exist;
@@ -208,7 +208,7 @@ define(["Filer", "util"], function(Filer, util) {
           expect(err).to.not.exist;
           fs.writeFile('/test/1.txt', 'Different file.', 'utf8', function(err) {
             expect(err).to.not.exist;
-            shell.rsync('/1.txt', '/test', {size: 5, checksum: true }, function(err) {
+            shell.rsync('/1.txt', '/test', {recursive: true, size: 5, checksum: true }, function(err) {
               expect(err).to.not.exist;
               fs.readFile('/test/1.txt', 'utf8', function(err, data) {
                 expect(err).to.not.exist;
@@ -235,7 +235,7 @@ define(["Filer", "util"], function(Filer, util) {
             expect(err).to.not.exist;
             expect(stats).to.exist;
             mtime = stats.mtime;
-            shell.rsync('/1.txt', '/test', { time: true, size: 5 }, function(err) {
+            shell.rsync('/1.txt', '/test', {recursive: true, time: true, size: 5 }, function(err) {
               expect(err).to.not.exist;
               fs.readFile('/test/1.txt', 'utf8', function(err, data){
                 expect(err).to.not.exist;
@@ -296,7 +296,7 @@ define(["Filer", "util"], function(Filer, util) {
           expect(err).to.not.exist;
           fs.symlink('/apple.txt', '/apple', function(err){
             expect(err).to.not.exist;
-            shell.rsync('/apple', '/test', { links:true }, function(err){
+            shell.rsync('/apple', '/test', {recursive: true, links:true }, function(err){
               expect(err).to.not.exist;
               fs.lstat('/test/apple', function(err, stats){
                 expect(err).to.not.exist;
@@ -330,7 +330,7 @@ define(["Filer", "util"], function(Filer, util) {
               expect(err).to.not.exist;
               expect(stats).to.exist;
               mtime = stats.mtime;
-              shell.rsync('/2', '/test', { time: true }, function(err){
+              shell.rsync('/2', '/test', {recursive: true, time: true }, function(err){
                 expect(err).to.not.exist;
                 fs.unlink('/1.txt', function(err){
                   expect(err).to.not.exist;
@@ -360,7 +360,7 @@ define(["Filer", "util"], function(Filer, util) {
 
       fs.writeFile('/1.txt','This is my file. It does not exist in the destination folder.', 'utf8', function(err) { 
         expect(err).to.not.exist;
-        shell.rsync('/1.txt', '/test', { size: 5 }, function(err) {
+        shell.rsync('/1.txt', '/test', {recursive: true, size: 5 }, function(err) {
           expect(err).to.not.exist;
           fs.readFile('/test/1.txt', 'utf8', function(err, data){
             expect(err).to.not.exist;
@@ -384,7 +384,7 @@ define(["Filer", "util"], function(Filer, util) {
             expect(err).to.not.exist;
             fs.writeFile('/test/2.txt','This is my 2nd file. It is longer than the destination file.', 'utf8', function(err) { 
               expect(err).to.not.exist;
-              shell.rsync('/test', '/test2', { size: 5 }, function(err) {
+              shell.rsync('/test', '/test2', {recursive: true, size: 5 }, function(err) {
                 expect(err).to.not.exist;
                 fs.readFile('/test2/1.txt', 'utf8', function(err, data){
                   expect(err).to.not.exist;
@@ -414,7 +414,7 @@ define(["Filer", "util"], function(Filer, util) {
           expect(err).to.not.exist;
           fs.writeFile('/test/2.txt','This is my 2nd file. It is longer than the destination file.', 'utf8', function(err) { 
           expect(err).to.not.exist;
-            shell.rsync('/test', '/test2', { size: 5 }, function(err) {
+            shell.rsync('/test', '/test2', {recursive: true, size: 5 }, function(err) {
               expect(err).to.not.exist;
               fs.readFile('/test2/1.txt', 'utf8', function(err, data){
                 expect(err).to.not.exist;
@@ -488,7 +488,35 @@ define(["Filer", "util"], function(Filer, util) {
       });
     });
     
-    it('##should succeed syncing a directory if the destination directories doesn\'t exist', function(done) {
+    it('##should succeed syncing a directory if the destination directory doesn\'t exist', function(done) {
+      var fs = util.fs();
+      var shell = fs.Shell();
+      var fs2 = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
+
+      fs.mkdir('/test', function(err) {
+        expect(err).to.not.exist;
+        fs.mkdir('/test/dir', function(err) {
+          expect(err).to.not.exist;
+          fs.mkdir('/test/dir/dirdir', function(err) {
+            expect(err).to.not.exist;
+            fs.writeFile('/test/dir/dirdir/1.txt','This is my 1st file. It does not have any typos.', 'utf8', function(err) { 
+              expect(err).to.not.exist;
+              shell.rsync('/test/dir/dirdir/1.txt', '/test/dir/dirdir', { fs: fs2, recursive: true, size: 5 }, function(err) {
+                expect(err).to.not.exist;
+                fs2.readFile('/test/dir/dirdir/1.txt', 'utf8', function(err, data){
+                  expect(err).to.not.exist;
+                  expect(data).to.exist;
+                  expect(data).to.equal('This is my 1st file. It does not have any typos.');
+                  done();
+                });
+              });
+            });
+          });
+        });   
+      });
+    });
+    
+    it('##should succeed syncing a directory if the destination directories do not exist', function(done) {
       var fs = util.fs();
       var shell = fs.Shell();
 
@@ -502,7 +530,7 @@ define(["Filer", "util"], function(Filer, util) {
               expect(err).to.not.exist;
               fs.mkdir('/test2', function(err) {
                 expect(err).to.not.exist;
-                shell.rsync('/test', '/test2', { size: 5 }, function(err) {
+                shell.rsync('/test', '/test2', {recursive: true, size: 5 }, function(err) {
                   console.dir(err);
                   expect(err).to.not.exist;
                   fs.stat('/test2', function(err, stats) {
