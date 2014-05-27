@@ -488,6 +488,56 @@ define(["Filer", "util"], function(Filer, util) {
       });
     });
     
+    it('qweefw', function(done) {
+      var fs = util.fs();
+      var fs2 = new Filer.FileSystem({provider: new Filer.FileSystem.providers.Memory()});
+      var shell = fs.Shell();
+
+      shell.mkdirp('/projects', function(err){
+        expect(err).to.not.exist;
+        shell.mkdirp('/projects/proj_1', function(err){
+          expect(err).to.not.exist;
+          shell.mkdirp('/projects/proj_2', function(err) {
+            expect(err).to.not.exist;
+            fs.writeFile('/projects/proj_1/index.html','Hello world', 'utf8', function(err) { 
+              expect(err).to.not.exist;
+              fs.writeFile('/projects/proj_1/styles.css','CSS', 'utf8', function(err) { 
+                expect(err).to.not.exist;
+                fs.writeFile('/projects/proj_2/styles2.css','CSS', 'utf8', function(err) { 
+                  expect(err).to.not.exist;
+                  shell.mkdirp('/projects/proj_2/inside_proj_2', function(err) {
+                    expect(err).to.not.exist;
+                    shell.rsync('/projects', '/', {fs: fs2, recursive: true, size: 5}, function(err, data) {
+                      expect(err).not.to.exist;
+                      fs2.readFile('/proj_1/index.html', 'utf8', function(err, data) {
+                        expect(err).to.not.exist;
+                        expect(data).to.exist;
+                        expect(data).to.equal('Hello world');
+                        fs2.readFile('/proj_1/styles.css', 'utf8', function(err, data) {
+                          expect(err).to.not.exist;
+                          expect(data).to.exist;
+                          expect(data).to.equal('CSS');
+                          fs2.readFile('/proj_2/styles2.css', 'utf8', function(err, data) {
+                            expect(err).to.not.exist;
+                            expect(data).to.exist;
+                            expect(data).to.equal('CSS');
+                            fs2.stat('/proj_2/inside_proj_2', function(err, stats) {
+                              expect(err).to.not.exist;
+                              done();
+                            })
+                          });
+                        });
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+    
     it('##should succeed syncing a directory if the destination directory doesn\'t exist', function(done) {
       var fs = util.fs();
       var shell = fs.Shell();
@@ -501,9 +551,9 @@ define(["Filer", "util"], function(Filer, util) {
             expect(err).to.not.exist;
             fs.writeFile('/test/dir/dirdir/1.txt','This is my 1st file. It does not have any typos.', 'utf8', function(err) { 
               expect(err).to.not.exist;
-              shell.rsync('/test/dir/dirdir/1.txt', '/test/dir/dirdir', { fs: fs2, recursive: true, size: 5 }, function(err) {
+              shell.rsync('/test', '/', { fs: fs2, recursive: true, size: 5 }, function(err) {
                 expect(err).to.not.exist;
-                fs2.readFile('/test/dir/dirdir/1.txt', 'utf8', function(err, data){
+                fs2.readFile('/dir/dirdir/1.txt', 'utf8', function(err, data){
                   expect(err).to.not.exist;
                   expect(data).to.exist;
                   expect(data).to.equal('This is my 1st file. It does not have any typos.');
@@ -531,22 +581,26 @@ define(["Filer", "util"], function(Filer, util) {
               fs.mkdir('/test2', function(err) {
                 expect(err).to.not.exist;
                 shell.rsync('/test', '/test2', {recursive: true, size: 5 }, function(err) {
-                  console.dir(err);
                   expect(err).to.not.exist;
                   fs.stat('/test2', function(err, stats) {
                     expect(err).to.not.exist;
                     expect(stats).to.exist;
                     expect(stats.type).to.equal('DIRECTORY');
-                    expect(stats.data).to.exist;
-                    expect(Object.prototype.hasOwnProperty.call(stats.data, 'dir1')).to.equal(true);
-                    expect(Object.prototype.hasOwnProperty.call(stats.data, 'dir2')).to.equal(true);
                     fs.stat('/test2/dir1', function(err, stats) {
                       expect(err).to.not.exist;
                       expect(stats).to.exist;
                       expect(stats.type).to.equal('DIRECTORY');
-                      expect(stats.data).to.exist;
-                      expect(Object.prototype.hasOwnProperty.call(stats.data, 'dir12')).to.equal(true);
-                      done();
+                      fs.stat('/test2/dir2', function(err, stats) {
+                        expect(err).to.not.exist;
+                        expect(stats).to.exist;
+                        expect(stats.type).to.equal('DIRECTORY');
+                        fs.stat('/test2/dir1/dir12', function(err, stats) {
+                          expect(err).to.not.exist;
+                          expect(stats).to.exist;
+                          expect(stats.type).to.equal('DIRECTORY');
+                          done();
+                        });
+                      });
                     });
                   });
                 });

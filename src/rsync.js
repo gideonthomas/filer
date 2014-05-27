@@ -7,6 +7,7 @@ define(function(require) {
   var cache = {};
   var options;
   var destFS;
+  var srcFS;
 
   //MD5 hashing for RSync
   //Used from Node.js Anchor module
@@ -151,7 +152,7 @@ define(function(require) {
   }
 
   function rsync (srcPath, destPath, opts, callback) {
-    var srcFS = this.fs;
+    srcFS = this.fs;
     if(typeof opts === 'function') {
       callback = opts;
       options = {};
@@ -199,7 +200,7 @@ define(function(require) {
                   callback(error);
                   return;
                 }
-
+                
                 var entry = { 
                   path: Path.basename(name),
                   modified: stats.mtime,
@@ -207,7 +208,7 @@ define(function(require) {
                   type: stats.type
                 };
                 if(options.recursive && stats.isDirectory()) {
-                  getSrcList(Path.join(srcPath, entry.path), function(error, items) {
+                  getSrcList(name, function(error, items) {
                     if(error) {
                       callback(error);
                       return;
@@ -217,8 +218,8 @@ define(function(require) {
                     callback();
                   });
                 } else if(stats.isFile() || !options.links) {
-                    result.push(entry);                
-                    callback();
+                  result.push(entry);                
+                  callback();
                 } else if (entry.type === 'SYMLINK'){
                   result.push(entry);                
                   callback();
@@ -399,7 +400,7 @@ define(function(require) {
   * MIT Licensed
   */
   function diff(path, checksums, callback) {
-    var srcFS = this;
+    //var srcFS = this;
     // roll through the file
     var diffs = [];
     srcFS.lstat(path, function(err, stat) {
@@ -585,6 +586,15 @@ define(function(require) {
   rsync.checksums = rsync.getChecksums;
   rsync.diff = diff;
   rsync.patch = sync;
+  rsync.setOptions = function(opts) {
+    options = opts || {};
+    options.size = options.size || 750;
+    options.checksum = options.checksum || false;
+    options.recursive = options.recursive || false;
+    options.time = options.time || false;
+    options.links = options.links || false;
+    srcFS = options.fs;
+  };
 
   return rsync;
 
